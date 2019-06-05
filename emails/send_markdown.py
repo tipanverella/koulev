@@ -1,9 +1,12 @@
 """
-    Simple email
+    Markdown email
     ref: https://dbader.org/blog/python-send-email
 """
 import smtplib
 import json
+import markdown
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 def send_email(recipient, subject, text):
@@ -14,13 +17,18 @@ def send_email(recipient, subject, text):
         creds = json.load(json_io)
     smtp_server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
     smtp_server.login(creds['username'], creds['password'])
-    message = f"Subject: {subject}\n\n{text}"
-    smtp_server.sendmail(creds['username'], recipient, message)
+    #message = f"Subject: {subject}\n\n{markdown.markdown(text)}"
+    message = MIMEMultipart('alternative')
+    message['To'] = recipient
+    message['From'] = creds['username']
+    message['Subject'] = subject
+    message.attach(MIMEText(markdown.markdown(text), 'html'))
+    smtp_server.sendmail(creds['username'], message['To'].split(','), message.as_string())
     smtp_server.close()
 
 if __name__ == '__main__':
     send_email(
         "tipan.verella@gmail.com",
         "Test email numero 2 from Python",
-        "Python di ou Bonjou!\nKouman ou ye?"
+        """# Yo Tipan!\n\n **Python** di ou Bonjou!\nKouman ou ye?"""
         )
